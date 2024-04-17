@@ -5,7 +5,7 @@ OBJ = $(SRC:.c=.o)
 NAME = ssoed
 
 $(NAME):
-	gcc $(SRC) -o $(NAME) -lsodium -Wall -g3;
+	gcc $(SRC) -o $(NAME) -I/usr/local/include -L/usr/local/lib -lsodium -Wall -g3
 
 all: $(NAME)
 
