@@ -2,7 +2,7 @@ SRC = ./ssoed.c
 
 OBJ = $(SRC:.c=.o)
 
-NAME = ssoed
+NAME = ssoed.out
 
 $(NAME):
 	gcc $(SRC) -o $(NAME) -I/usr/local/include -L/usr/local/lib -lsodium -Wall -g3

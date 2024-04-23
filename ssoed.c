@@ -1,128 +1,111 @@
-#include <sodium.h>
-#include <string.h>
+#include "ssoed.h"
 
-#define KEY_SIZE 32
-#define BLOCK_SIZE 16
-#define NONCE_SIZE 24
+#define KEY_LENGTH 3
 
- void split_text_into_blocks(const unsigned char *text, size_t text_length, unsigned char *blocks[], size_t *num_blocks) {
-    *num_blocks = (text_length + BLOCK_SIZE - 1) / BLOCK_SIZE;
+void pseudorandom_generator(void *buffer, const size_t size) {
+    randombytes_buf(buffer, size);
+}
 
-     for (size_t i = 0; i < *num_blocks; i++) {
-         blocks[i] = (unsigned char *)malloc(BLOCK_SIZE);
-         if (blocks[i] == NULL) {
-             printf("Error: Memory allocation failed\n");
-             exit(1);
-         }
-     }
+void pseudorandom_function(const void *key, size_t key_size, const char *plaintext, size_t plaintext_size, char *hash, size_t hash_size) {
+    crypto_generichash((unsigned char *) hash, hash_size, (unsigned char *) plaintext, plaintext_size, key, key_size);
+}
 
-    for (size_t i = 0; i < *num_blocks; i++) {
-        size_t bytes_to_copy = (i + 1) * BLOCK_SIZE <= text_length ? BLOCK_SIZE : text_length - i * BLOCK_SIZE;
-        memcpy(blocks[i], text + i * BLOCK_SIZE, bytes_to_copy);
+int encrypt_word(const char *key, const char *plain, char *cipher, size_t length) {
+    for (size_t i = 0; i < length; i++) {
+        cipher[i] = plain[i] ^ key[i];
     }
+    return 0;
 }
 
-void free_blocks(unsigned char *blocks[], size_t num_blocks) {
-    for (size_t i = 0; i < num_blocks; i++) {
-        free(blocks[i]);
+void *safe_malloc(size_t size) {
+    void *ptr = malloc(size);
+    if (ptr == NULL) {
+        perror("Memory allocation failed");
+        exit(EXIT_FAILURE);
     }
+    return ptr;
 }
 
-void encrypt_block(const unsigned char *key, const unsigned char *nonce, const unsigned char *plaintext, unsigned char *ciphertext) {
-    crypto_secretbox_easy(ciphertext, plaintext, BLOCK_SIZE, nonce, key);
+char *get_encryption_value(const char *text, size_t text_length, const char *key, size_t key_length) {
+    size_t random_bytes_length = text_length - KEY_LENGTH;
+    char *encryption_value = safe_malloc(text_length);
+    void *randombytes = safe_malloc(random_bytes_length);
+    char *hash = safe_malloc(KEY_LENGTH);
+
+    pseudorandom_generator(randombytes, random_bytes_length);
+    memcpy(encryption_value, randombytes, random_bytes_length);
+    pseudorandom_function(key, key_length, randombytes, random_bytes_length, hash, KEY_LENGTH);
+    memcpy(&encryption_value[random_bytes_length], hash, KEY_LENGTH);
+
+    free(randombytes);
+    free(hash);
+
+    return encryption_value;
 }
 
-int decrypt_block(const unsigned char *key, const unsigned char *nonce, const unsigned char *ciphertext, unsigned char *plaintext) {
-    return crypto_secretbox_open_easy(plaintext, ciphertext, BLOCK_SIZE + crypto_secretbox_MACBYTES, nonce, key);
-}
+int basic_search(void *key, const char *cipher, const char *word, size_t length) {
+    size_t random_bytes_length = length - KEY_LENGTH;
+    char *encryption_value = safe_malloc(length);
+    char *compare_value = safe_malloc(length);
+    char *hash = safe_malloc(KEY_LENGTH);
 
-int buffers_equal(const unsigned char *buffer1, const unsigned char *buffer2, size_t size) {
-    return memcmp(buffer1, buffer2, size) == 0;
-}
-
-void pseudorandom_function(const unsigned char *key, const unsigned char *message, unsigned char *output) {
-    crypto_generichash(output, crypto_generichash_BYTES, message, BLOCK_SIZE, key, KEY_SIZE);
-}
-
-void generate_pseudorandom(unsigned char *buffer, size_t buffer_size) {
-    randombytes_buf(buffer, buffer_size);
-}
-
-void test_pseudorandom_function() {
-    unsigned char key[KEY_SIZE];
-    unsigned char message[BLOCK_SIZE] = {"Hello World\0"};
-    unsigned char output[crypto_generichash_BYTES];
-    unsigned char output2[crypto_generichash_BYTES];
-
-    randombytes_buf(key, KEY_SIZE);
-
-    pseudorandom_function(key, message, output);
-    pseudorandom_function(key, message, output2);
-
-    if (buffers_equal(output, output2, crypto_generichash_BYTES)) {
-        printf("Output matches for input %s\n", message);
-    } else {
-        printf("Output does not match for input %s\n", message);
+    for (size_t i = 0; i < length; i++) {
+        encryption_value[i] = cipher[i] ^ word[i];
     }
+    memcpy(compare_value, encryption_value, random_bytes_length);
+    pseudorandom_function(key, length, compare_value, random_bytes_length, hash, KEY_LENGTH);
+    memcpy(&compare_value[random_bytes_length], hash, KEY_LENGTH);
 
-    printf("Pseudorandom Output:\n");
-    for (int i = 0; i < crypto_generichash_BYTES; i++) {
-        printf("%02x", output[i]);
-    }
-    printf("\n");
-}
-
-void test_split_text_into_blocks() {
-    const char *text = "This is a longer text that needs to be split into blocks of the specified size.";
-    size_t text_length = strlen(text);
-    size_t num_blocks = (text_length + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    unsigned char *blocks[num_blocks];
-
-    split_text_into_blocks((const unsigned char *)text, text_length, blocks, &num_blocks);
-
-    printf("Text Blocks:\n");
-    for (size_t i = 0; i < num_blocks; i++) {
-        printf("Block %zu: ", i + 1);
-        for (size_t j = 0; j < BLOCK_SIZE; j++) {
-            printf("%02x", blocks[i][j]);
+    for (size_t i = 0; i < length; i++) {
+        if (encryption_value[i] != compare_value[i]) {
+            return 0;
         }
-        printf("\n");
     }
-    free_blocks(blocks, num_blocks);
+
+    free(encryption_value);
+    free(compare_value);
+    free(hash);
+
+    return 1;
 }
 
-void test_encrypt_decrypt_block() {
-    unsigned char key[KEY_SIZE];
-    unsigned char nonce[NONCE_SIZE];
-    unsigned char plaintext[BLOCK_SIZE] = {"Hello World\0"};
-    unsigned char ciphertext[BLOCK_SIZE + crypto_secretbox_MACBYTES];
-    unsigned char decrypted_plaintext[BLOCK_SIZE];
-    
-    randombytes_buf(key, KEY_SIZE);
-    randombytes_buf(nonce, NONCE_SIZE);
-    
-    encrypt_block(key, nonce, plaintext, ciphertext);
+void test_basic_scheme() {
+    const char *text[2] = {"Hello", "World"};
+    const char *keys[2] = {"World", "Hello"};
 
-    int decryption_result = decrypt_block(key, nonce, ciphertext, decrypted_plaintext);
-    if (decryption_result != 0) {
-        printf("Decryption failed\n");
-        return;
-    }
-    
-    if (buffers_equal(plaintext, decrypted_plaintext, BLOCK_SIZE)) {
-        printf("Encryption and decryption successful.\n");
-    } else {
-        printf("Decryption failed. Decrypted plaintext does not match original plaintext.\n");
+    for (int i = 0; i < 2; i++) {
+        size_t string_length = strlen(text[i]);
+        char *key = get_encryption_value(keys[i], string_length, keys[i], string_length);
+        char *cipher = safe_malloc(string_length);
+        char *plain = safe_malloc(string_length);
+
+        strcpy(cipher, text[i]);
+        strcpy(plain, text[i]);
+
+        encrypt_word(key, text[i], cipher, string_length);
+        printf("Encrypted Word: %s\n", cipher);
+
+        if (basic_search((void *)keys[1], cipher, text[i], string_length) == 0) {
+            printf("Didn't find %s with key %s in %s encrypted with key %s\n", text[i], keys[1], cipher, keys[i]);
+        } else {
+            printf("Did find %s with key %s in %s encrypted with key %s\n", text[i], keys[1], cipher, keys[i]);
+        }
+
+        encrypt_word(key, cipher, plain, string_length);
+        printf("Decrypted Word: %s\n", plain);
+
+        free(key);
+        free(cipher);
+        free(plain);
     }
 }
 
 int main(void) {
     if (sodium_init() < 0) {
-        exit(2);
+        perror("Sodium initialization failed");
+        exit(EXIT_FAILURE);
     }
 
-    test_pseudorandom_function();
-    test_split_text_into_blocks();
-    test_encrypt_decrypt_block();
+    test_basic_scheme();
     return 0;
 }
