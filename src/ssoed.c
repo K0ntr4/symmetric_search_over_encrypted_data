@@ -1,4 +1,4 @@
-#include "ssoed.h"
+#include "../include/ssoed.h"
 
 #define KEY_LENGTH 3
 

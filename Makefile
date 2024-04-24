@@ -1,4 +1,4 @@
-SRC = ./ssoed.c
+SRC = ./src/*.c
 OBJ = $(SRC:.c=.o)
 NAME = ssoed.out
 CFLAGS = -Wall -g3 -I$(INCLUDE_DIR)
