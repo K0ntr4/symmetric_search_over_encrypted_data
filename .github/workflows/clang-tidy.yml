@@ -1,0 +1,27 @@
+name: Clang-Tidy
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  clang-tidy:
+    name: Run Clang-Tidy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bear clang-tidy
+
+    - name: Generate compile_commands.json
+      run: bear make all
+
+    - name: Run Clang-Tidy
+      run: clang-tidy -p=./ ssoed.c
