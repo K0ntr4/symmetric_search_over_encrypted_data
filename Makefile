@@ -17,8 +17,11 @@ $(NAME): $(OBJ)
 %.o: %.c
 	gcc $(CFLAGS) -c $< -o $@
 
-lint:
+lint-fix:
 	clang-tidy -p=./ --fix $(SRC)
+
+lint:
+	clang-tidy -p=./ $(SRC)
 
 format:
 	clang-format -i $(SRC)
