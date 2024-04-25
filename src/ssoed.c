@@ -1,6 +1,7 @@
 #include "../include/ssoed.h"
 
 #define KEY_LENGTH 3
+#define WORD_COUNT 2
 
 void pseudorandom_generator(void *buffer, const size_t size) {
   randombytes_buf(buffer, size);
@@ -13,12 +14,11 @@ void pseudorandom_function(const void *key, size_t key_size,
                      (unsigned char *)plaintext, plaintext_size, key, key_size);
 }
 
-int encrypt_word(const char *key, const char *plain, char *cipher,
-                 size_t length) {
+void encrypt_word(const char *key, const char *plain, char *cipher,
+                  size_t length) {
   for (size_t i = 0; i < length; i++) {
     cipher[i] = plain[i] ^ key[i];
   }
-  return 0;
 }
 
 void safe_memcpy(void *dest, size_t dest_size, const void *src,
@@ -32,7 +32,7 @@ void safe_memcpy(void *dest, size_t dest_size, const void *src,
 
 void *safe_malloc(size_t size) {
   void *ptr = malloc(size);
-  if (ptr == NULL) {
+  if (!ptr) {
     perror("Memory allocation failed");
     exit(EXIT_FAILURE);
   }
@@ -57,8 +57,8 @@ void safe_strcpy(char *dest, size_t dest_size, const char *src) {
   dest[src_length] = '\0';
 }
 
-char *get_encryption_value(const char *text, size_t text_length,
-                           const char *key, size_t key_length) {
+char *get_encryption_value(size_t text_length, const char *key,
+                           size_t key_length) {
   size_t random_bytes_length = text_length - KEY_LENGTH;
   char *encryption_value = safe_malloc(text_length);
   void *randombytes = safe_malloc(random_bytes_length);
@@ -83,6 +83,7 @@ int basic_search(void *key, const char *cipher, const char *word,
   char *encryption_value = safe_malloc(length);
   char *compare_value = safe_malloc(length);
   char *hash = safe_malloc(KEY_LENGTH);
+  int res = 1;
 
   for (size_t i = 0; i < length; i++) {
     encryption_value[i] = cipher[i] ^ word[i];
@@ -95,40 +96,100 @@ int basic_search(void *key, const char *cipher, const char *word,
 
   for (size_t i = 0; i < length; i++) {
     if (encryption_value[i] != compare_value[i]) {
-      return 0;
+      res = 0;
     }
   }
 
   free(encryption_value);
   free(compare_value);
   free(hash);
-
-  return 1;
+  return res;
 }
 
-void test_basic_scheme() {
-  const char *text[2] = {"Hello", "World"};
-  const char *keys[2] = {"World", "Hello"};
+void generate_encryption_key(const char *plaintext,
+                             const size_t plaintext_length, char *key,
+                             const size_t key_length) {
+  void *random_bytes = safe_malloc(plaintext_length);
+  pseudorandom_generator(random_bytes, plaintext_length);
+  pseudorandom_function(random_bytes, plaintext_length, plaintext,
+                        plaintext_length, key,
+                        key_length); // TODO use another pseudorandom function
+  free(random_bytes);
+}
 
-  for (int i = 0; i < 2; i++) {
-    size_t string_length = strlen(text[i]);
-    char *key =
-        get_encryption_value(keys[i], string_length, keys[i], string_length);
+void printByteArray(const unsigned char *arr, int size) {
+  for (int i = 0; i < size; i++) {
+    printf("%02X ", arr[i]);
+  }
+  printf("\n");
+}
+
+void test_controlled_scheme() {
+  const char *text[WORD_COUNT] = {"Hello\0", "World\0"};
+  char *keys[WORD_COUNT];
+
+  for (int i = 0; i < WORD_COUNT; i++) {
+    size_t string_length = strlen(text[i]) + 1;
+    char *encryption_key = safe_malloc(string_length);
+    generate_encryption_key(text[i], string_length, encryption_key,
+                            string_length);
+    keys[i] = encryption_key;
+    char *encryption_value =
+        get_encryption_value(string_length, encryption_key, string_length);
     char *cipher = safe_malloc(string_length);
     char *plain = safe_malloc(string_length);
 
-    safe_strcpy(cipher, string_length, text[i]);
-    safe_strcpy(plain, string_length, text[i]);
+    cipher[string_length - 1] = '\0';
+    plain[string_length - 1] = '\0';
+
+    encrypt_word(encryption_value, text[i], cipher, string_length);
+    printf("Encrypted Word: ");
+    printByteArray((unsigned char *)cipher, string_length);
+
+    int res = basic_search((void *)keys[0], cipher, text[i], string_length);
+
+    if (res == 0) {
+      printf("Did not find %s\n", text[i]);
+    } else {
+      printf("Did find %s\n", text[i]);
+    }
+
+    encrypt_word(encryption_value, cipher, plain, string_length);
+    printf("Decrypted Word: %s\n", plain);
+
+    free(encryption_value);
+    free(cipher);
+    free(plain);
+  }
+
+  for (int i = 0; i < WORD_COUNT; i++) {
+    free(keys[i]);
+  }
+}
+
+void test_basic_scheme() {
+  const char *text[WORD_COUNT] = {"Hello\0", "World\0"};
+  const char *keys[WORD_COUNT] = {"World\0", "Hello\0"};
+
+  for (int i = 0; i < WORD_COUNT; i++) {
+    size_t string_length = strlen(text[i]) + 1;
+    char *key = get_encryption_value(string_length, keys[i], string_length);
+    char *cipher = safe_malloc(string_length);
+    char *plain = safe_malloc(string_length);
+
+    cipher[string_length - 1] = '\0';
+    plain[string_length - 1] = '\0';
 
     encrypt_word(key, text[i], cipher, string_length);
-    printf("Encrypted Word: %s\n", cipher);
+    printf("Encrypted Word: ");
+    printByteArray((unsigned char *)cipher, string_length);
 
-    if (basic_search((void *)keys[1], cipher, text[i], string_length) == 0) {
-      printf("Didn't find %s with key %s in %s encrypted with key %s\n",
-             text[i], keys[1], cipher, keys[i]);
+    int res = basic_search((void *)keys[1], cipher, text[i], string_length);
+
+    if (res == 0) {
+      printf("Did not find %s\n", text[i]);
     } else {
-      printf("Did find %s with key %s in %s encrypted with key %s\n", text[i],
-             keys[1], cipher, keys[i]);
+      printf("Did find %s\n", text[i]);
     }
 
     encrypt_word(key, cipher, plain, string_length);
@@ -146,6 +207,8 @@ int main(void) {
     exit(EXIT_FAILURE);
   }
 
-  test_basic_scheme();
+  // test_basic_scheme();
+  // printf("\n");
+  test_controlled_scheme();
   return 0;
 }
