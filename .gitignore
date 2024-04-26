@@ -54,3 +54,4 @@ dkms.conf
 # Local files
 .idea/
 .vscode/
+compile_commands.json
