@@ -1,4 +1,4 @@
-SRC = ./src/*.c
+SRC = ./src/ssoed.c ./src/utils.c ./src/base_encryption.c ./src/basic_scheme.c
 OBJ = $(SRC:.c=.o)
 NAME = ssoed.out
 CFLAGS = -Wall -g3 -I$(INCLUDE_DIR)
@@ -9,7 +9,7 @@ LIB_DIR = /usr/local/lib
 
 all: $(NAME)
 
-run_all: fclean format lint $(NAME)
+run_all: fclean format lint $(NAME) clean
 
 $(NAME): $(OBJ)
 	gcc $(OBJ) -o $(NAME) $(LDFLAGS)
@@ -25,6 +25,7 @@ lint:
 
 format:
 	clang-format -i $(SRC)
+	clang-format -i include/*.h
 
 clean:
 	rm -f $(OBJ)
