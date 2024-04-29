@@ -1,4 +1,4 @@
-SRC = ./src/ssoed.c ./src/utils.c ./src/base_encryption.c ./src/basic_scheme.c
+SRC = ./src/ssoed.c ./src/utils.c ./src/base_encryption.c ./src/basic_scheme.c ./src/controlled_scheme.c
 OBJ = $(SRC:.c=.o)
 NAME = ssoed.out
 CFLAGS = -Wall -g3 -I$(INCLUDE_DIR)
@@ -27,6 +27,9 @@ format:
 	clang-format -i $(SRC)
 	clang-format -i include/*.h
 
+checkmemory:
+	valgrind --leak-check=full --track-origins=yes --show-error-list=yes ./ssoed.out
+
 clean:
 	rm -f $(OBJ)
 
@@ -35,4 +38,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all lint format clean fclean re run_all
+.PHONY: all lint format clean fclean re run_all checkmemory

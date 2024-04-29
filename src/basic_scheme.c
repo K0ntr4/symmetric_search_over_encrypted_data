@@ -83,8 +83,8 @@ void basic_scheme() {
   basic_encryption(keys, plaintext, WORD_COUNT, ciphertext, encryption_keys);
 
   // search for plaintext[1] in ciphertext[1] with keys[1]
-  int res = basic_search((void *)keys[1], strlen(plaintext[1]), ciphertext[1],
-                         plaintext[1], strlen(plaintext[1]));
+  int res = basic_search((void *)keys[1], cipher_lengths[1], ciphertext[1],
+                         plaintext[1], cipher_lengths[1]);
   if (res) {
     printf("Did find %s\n", plaintext[1]); // should be found if no issues
   }

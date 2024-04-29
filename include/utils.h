@@ -19,7 +19,9 @@ extern void concat_string_array_with_word(const char *arr[],
                                           const size_t arr_length,
                                           const char *word, char *output,
                                           size_t output_length);
+char *chapter_index_to_string_with_leading_zero(int chapter_index);
 extern void get_string_lengths_from_arr(const char *arr[], size_t arr_length,
                                         size_t lengths[]);
+char *uint_to_string(int num);
 
 #endif // UTILS_H

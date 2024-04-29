@@ -3,6 +3,7 @@
 
 #include "base_encryption.h"
 #include "basic_scheme.h"
+#include "controlled_scheme.h"
 #include "utils.h"
 
 void pseudorandom_generator(void *buffer, const size_t size);
@@ -18,7 +19,5 @@ void generate_encryption_key(const char *plaintext,
                              const size_t key_length);
 int basic_search(void *key, size_t key_length, const char *cipher,
                  const char *word, size_t length);
-void test_basic_scheme();
-void test_controlled_scheme();
 
 #endif // SSOED_H

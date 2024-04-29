@@ -80,3 +80,44 @@ void get_string_lengths_from_arr(const char *arr[], size_t arr_length,
     lengths[i] = strlen(arr[i]) + 1;
   }
 }
+
+char digit_to_char(int digit) { return '0' + digit; }
+
+int int_to_string_length(int num) {
+  int temp = num;
+  int length = num == 0 ? 1 : 0;
+
+  while (temp != 0) {
+    temp /= 10;
+    length++;
+  }
+  return length;
+}
+
+char *uint_to_string(int num) {
+  int length = int_to_string_length(num);
+  int remainder;
+  char *result = safe_malloc(length + 1);
+  result[length] = '\0';
+
+  int i = length - 1;
+  do {
+    remainder = num % 10;
+    result[i--] = digit_to_char(remainder);
+    num /= 10;
+  } while (num != 0);
+
+  return result;
+}
+
+char *chapter_index_to_string_with_leading_zero(int chapter_index) {
+  char *index_string = uint_to_string(chapter_index);
+  size_t length = strlen(index_string) + 2;
+  char *result = safe_malloc(length);
+
+  result[0] = '0';
+  result[length - 1] = '\0';
+  safe_strcpy(&result[1], length - 1, index_string);
+  free(index_string);
+  return result;
+}
