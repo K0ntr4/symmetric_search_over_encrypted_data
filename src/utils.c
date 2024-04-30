@@ -43,37 +43,6 @@ void print_byte_array(const unsigned char *arr, int size) {
   printf("\n");
 }
 
-size_t concatenated_string_array_size(const char *arr[],
-                                      const size_t arr_length) {
-  size_t res = 0;
-  for (int i = 0; i < arr_length; i++) {
-    res = res + strlen(arr[i]);
-  }
-  return res + 1;
-}
-
-void concat_string_array(const char *arr[], const size_t arr_length,
-                         char *output, size_t output_length) {
-  int last_written = 0;
-
-  for (int i = 0; i < arr_length; i++) {
-    safe_strcpy(&output[last_written], output_length, arr[i]);
-    last_written = last_written + strlen(arr[i]);
-  }
-}
-
-void concat_string_array_with_word(const char *arr[], const size_t arr_length,
-                                   const char *word, char *output,
-                                   size_t output_length) {
-  int last_written = 0;
-
-  for (int i = 0; i < arr_length; i++) {
-    safe_strcpy(&output[last_written], output_length, arr[i]);
-    last_written = last_written + strlen(arr[i]);
-  }
-  safe_strcpy(&output[last_written], output_length, word);
-}
-
 void get_string_lengths_from_arr(const char *arr[], size_t arr_length,
                                  size_t lengths[]) {
   for (int i = 0; i < arr_length; i++) {
@@ -120,4 +89,74 @@ char *chapter_index_to_string_with_leading_zero(int chapter_index) {
   safe_strcpy(&result[1], length - 1, index_string);
   free(index_string);
   return result;
+}
+
+char *concat_chapter_index_with_word(int chapter_index, char *word) {
+  char *index_string = uint_to_string(chapter_index);
+  size_t index_length = strlen(index_string);
+  size_t length = index_length + strlen(word) + 1;
+  char *result = safe_malloc(length);
+
+  result[length - 1] = '\0';
+  safe_strcpy(result, length - 1, index_string);
+  safe_strcpy(&result[index_length - 1], length - index_length - 1, word);
+  free(index_string);
+  return result;
+}
+
+char ***create_dynamic_string_array(const char *plaintext[], size_t num_words,
+                                    const size_t chapter_indexes[],
+                                    size_t num_chapters) {
+  char ***dynamic_array = safe_malloc((num_chapters + 2) * sizeof(char **));
+
+  size_t start_index = 0;
+  for (size_t i = 0; i < num_chapters; i++) {
+    size_t end_index = chapter_indexes[i];
+    size_t chapter_length = end_index - start_index;
+
+    dynamic_array[i] = safe_malloc((chapter_length + 1) * sizeof(char *));
+
+    for (size_t j = 0; j < chapter_length; j++) {
+      dynamic_array[i][j] = safe_malloc(strlen(plaintext[start_index + j]) + 1);
+      safe_strcpy(dynamic_array[i][j], strlen(plaintext[start_index + j]) + 1,
+                  plaintext[start_index + j]);
+    }
+    dynamic_array[i][chapter_length] = NULL;
+    start_index = end_index;
+  }
+
+  size_t last_chapter_length = num_words - start_index;
+  dynamic_array[num_chapters] =
+      safe_malloc((last_chapter_length + 1) * sizeof(char *));
+
+  for (size_t j = 0; j < last_chapter_length; j++) {
+    dynamic_array[num_chapters][j] =
+        safe_malloc(strlen(plaintext[start_index + j]) + 1);
+    safe_strcpy(dynamic_array[num_chapters][j],
+                strlen(plaintext[start_index + j]) + 1,
+                plaintext[start_index + j]);
+  }
+
+  dynamic_array[num_chapters][last_chapter_length] = NULL;
+  dynamic_array[num_chapters + 1] = NULL;
+  return dynamic_array;
+}
+
+void free_dynamic_string_array(char ***dynamic_array) {
+  for (size_t i = 0; dynamic_array[i] != NULL; i++) {
+    for (size_t j = 0; dynamic_array[i][j] != NULL; j++) {
+      free(dynamic_array[i][j]);
+    }
+    free(dynamic_array[i]);
+  }
+  free(dynamic_array);
+}
+
+void get_string_lengths_from_chapter_arr(char ***dynamic_array,
+                                         size_t *cipher_lengths[]) {
+  for (size_t i = 0; dynamic_array[i] != NULL; i++) {
+    for (size_t j = 0; dynamic_array[i][j] != NULL; j++) {
+      cipher_lengths[i][j] = strlen(dynamic_array[i][j]) + 1;
+    }
+  }
 }
