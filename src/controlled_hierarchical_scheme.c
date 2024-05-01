@@ -6,7 +6,7 @@ void generate_hierarchical_encryption_key(void *generation_key,
                                           const char *plaintext,
                                           const size_t plaintext_length,
                                           char *key, const size_t key_length) {
-  // TODO: Replace with another pseudorandom function
+  // Could be replaced with another pseudorandom function - decided to skip for now
   pseudorandom_function(generation_key, generation_key_length, plaintext,
                         plaintext_length, key, key_length);
 }
