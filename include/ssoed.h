@@ -3,8 +3,9 @@
 
 #include "base_encryption.h"
 #include "basic_scheme.h"
-#include "controlled_scheme.h"
 #include "controlled_chapter_scheme.h"
+#include "controlled_hierarchical_scheme.h"
+#include "controlled_scheme.h"
 #include "utils.h"
 
 void pseudorandom_generator(void *buffer, const size_t size);

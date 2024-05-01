@@ -1,0 +1,38 @@
+name: Check Memory
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget tar build-essential valgrind
+
+      - name: Download and extract libsodium
+        run: |
+          URL=$(curl -s https://download.libsodium.org/libsodium/releases/ | grep -oP 'libsodium-\d+\.\d+\.\d+-stable.tar.gz' | tail -n 1)
+          wget -O libsodium.tar.gz https://download.libsodium.org/libsodium/releases/$URL
+          tar -xzf libsodium.tar.gz
+          cd libsodium-*
+          ./configure
+          make
+          sudo make install
+          sudo ldconfig
+
+      - name: Compile program
+        run: make all
+
+      - name: Check memory leaks
+        run: make check-memory

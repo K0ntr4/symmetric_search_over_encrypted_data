@@ -20,6 +20,10 @@ void get_string_lengths_from_chapter_arr(char ***dynamic_array,
 char ***create_dynamic_string_array(const char *plaintext[], size_t num_words,
                                     const size_t chapter_indexes[],
                                     size_t num_chapters);
+char ***create_empty_dynamic_string_array(const char *plaintext[],
+                                          size_t num_words,
+                                          const size_t chapter_indexes[],
+                                          size_t num_chapters);
 void free_dynamic_string_array(char ***dynamic_array);
 
 #endif // UTILS_H
