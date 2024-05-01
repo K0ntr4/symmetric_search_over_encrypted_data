@@ -61,6 +61,8 @@ Contributions to the project are welcome! If you have ideas for new features, im
 
 Contributors are encouraged to follow the style guides enforced by clang-tidy and clang-format. Makefile actions are provided for both tools, but contributors will need to install both packages and run bear make all to generate the configuration file. The bear package is also required for this setup.
 
+To ensure memory safety and detect memory errors, contributors are also encouraged to use the `checkmemory` command in the Makefile, which utilizes Valgrind for memory error checks on the compiled program.
+
 Additionally, please ensure that any new code or changes are in line with the principles outlined in the research paper by Dawn Xiaodong Song, David Wagner, and Adrian Perrig, titled "Practical Techniques for Searches on Encrypted Data", as this project aims to implement their scheme for Symmetric Search Over Encrypted Data (SSOED).
 
 ## License
