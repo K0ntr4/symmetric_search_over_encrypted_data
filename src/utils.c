@@ -21,6 +21,9 @@ void *safe_malloc(size_t size) {
   return ptr;
 }
 
+// Allocate memory securely using libsodium's sodium_malloc function.
+// This function ensures secure memory allocation by exiting the program
+// with an error message if memory allocation fails.
 void *safe_secure_malloc(size_t size) {
   void *ptr = sodium_malloc(size);
   if (!ptr) {
@@ -30,6 +33,7 @@ void *safe_secure_malloc(size_t size) {
   return ptr;
 }
 
+// Free memory securely using libsodium's sodium_free function.
 void secure_free(void *ptr) { sodium_free(ptr); }
 
 // Safely copy a string from source to destination, ensuring the destination
@@ -222,6 +226,10 @@ void free_dynamic_string_array(char ***dynamic_array) {
   free(dynamic_array);
 }
 
+// Free memory allocated for a dynamic array of strings securely.
+// This function takes a pointer to the dynamic array of strings as input.
+// It iterates through each string in the array, freeing memory for each string
+// using secure_free, then frees the memory allocated for the array itself.
 void free_dynamic_secure_string_array(char ***dynamic_array) {
   for (size_t i = 0; dynamic_array[i] != NULL; i++) {
     for (size_t j = 0; dynamic_array[i][j] != NULL; j++) {
