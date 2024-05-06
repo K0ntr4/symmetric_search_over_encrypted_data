@@ -12,9 +12,9 @@ int basic_search(void *key, size_t key_length, const char *cipher,
   size_t random_bytes_length = cipher_length - KEY_LENGTH;
 
   // Allocate memory for encryption value, compare value, and hash
-  char *encryption_value = safe_malloc(cipher_length);
-  char *compare_value = safe_malloc(cipher_length);
-  char *hash = safe_malloc(KEY_LENGTH);
+  char *encryption_value = safe_secure_malloc(cipher_length);
+  char *compare_value = safe_secure_malloc(cipher_length);
+  char *hash = safe_secure_malloc(KEY_LENGTH);
 
   // Initialize result
   int res = 1;
@@ -34,8 +34,10 @@ int basic_search(void *key, size_t key_length, const char *cipher,
                         hash, KEY_LENGTH);
 
   // Copy hash to compare value
+    sodium_mprotect_readonly(hash);
   safe_memcpy(&compare_value[random_bytes_length],
               cipher_length - random_bytes_length, hash, KEY_LENGTH);
+    secure_free(hash);
 
   // Compare encryption value and compare value
   for (size_t i = 0; i < cipher_length; i++) {
@@ -45,15 +47,14 @@ int basic_search(void *key, size_t key_length, const char *cipher,
   }
 
   // Free allocated memory
-  free(encryption_value);
-  free(compare_value);
-  free(hash);
+  secure_free(encryption_value);
+  secure_free(compare_value);
 
   return res;
 }
 
 // Perform basic encryption for an array of plaintext words
-void basic_encryption(const char *keys[], const char *plaintext[],
+void basic_encryption(char *keys[], const char *plaintext[],
                       size_t length, char *ciphertext[],
                       char *encryption_keys[]) {
   for (int i = 0; i < length; i++) {
@@ -61,7 +62,7 @@ void basic_encryption(const char *keys[], const char *plaintext[],
     size_t string_length = strlen(plaintext[i]) + 1;
 
     // Allocate memory for encryption keys and ciphertext
-    encryption_keys[i] = safe_malloc(string_length);
+    encryption_keys[i] = safe_secure_malloc(string_length);
     ciphertext[i] = safe_malloc(string_length);
     ciphertext[i][string_length - 1] = '\0'; // Null-terminate
 
@@ -104,7 +105,17 @@ void basic_decryption(char *encryption_keys[], char *ciphertext[],
 void basic_scheme() {
   // Initialize variables
   const char *plaintext[WORD_COUNT] = {"Hello\0", "World\0"};
-  const char *keys[WORD_COUNT] = {"World\0", "Hello\0"};
+    char **keys = safe_malloc(WORD_COUNT * sizeof(char *));
+
+    // Allocate memory for each key and assign values
+    keys[0] = safe_secure_malloc(6); // "World\0"
+    keys[1] = safe_secure_malloc(6); // "Hello\0"
+
+    // Assign values to keys
+    snprintf(keys[0], 6, "World");
+    sodium_mprotect_noaccess(keys[0]);
+    snprintf(keys[1], 6, "Hello");
+    sodium_mprotect_noaccess(keys[1]);
   char *ciphertext[WORD_COUNT];
   char *encryption_keys[WORD_COUNT];
   char *decrypted_plaintext[WORD_COUNT];
@@ -127,8 +138,10 @@ void basic_scheme() {
 
   // Free allocated memory
   for (int i = 0; i < WORD_COUNT; i++) {
-    free(encryption_keys[i]);
+      secure_free(keys[i]);
+    secure_free(encryption_keys[i]);
     free(ciphertext[i]);
     free(decrypted_plaintext[i]);
   }
+    free(keys);
 }

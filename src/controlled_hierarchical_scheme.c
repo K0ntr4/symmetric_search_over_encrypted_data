@@ -7,8 +7,11 @@ void generate_hierarchical_encryption_key(void *generation_key,
                                           const size_t plaintext_length,
                                           char *key, const size_t key_length) {
   // Could be replaced with another pseudorandom function - decided to skip for now
+    sodium_mprotect_readonly(generation_key);
   pseudorandom_function(generation_key, generation_key_length, plaintext,
                         plaintext_length, key, key_length);
+    sodium_mprotect_noaccess(generation_key);
+    sodium_mprotect_noaccess(key);
 }
 
 // Perform a controlled hierarchical search
@@ -26,16 +29,18 @@ int controlled_hierarchical_search(void *universal_key, size_t key_length,
 
   // Allocate memory for encryption key, encryption value, compare value, and
   // hash
-  char *encryption_key = safe_malloc(key_length);
-  char *encryption_value = safe_malloc(cipher_length);
-  char *compare_value = safe_malloc(cipher_length);
-  char *hash = safe_malloc(KEY_LENGTH);
+  char *encryption_key = safe_secure_malloc(key_length);
+  char *encryption_value = safe_secure_malloc(cipher_length);
+  char *compare_value = safe_secure_malloc(cipher_length);
+  char *hash = safe_secure_malloc(KEY_LENGTH);
   int res = 1; // Initialize result to success
 
+    sodium_mprotect_readonly(universal_key);
   // Generate encryption key based on the provided universal key and chapter
   generate_hierarchical_encryption_key(
       universal_key, key_length, concatenated_chapter,
       strlen(concatenated_chapter), encryption_key, key_length);
+    sodium_mprotect_noaccess(universal_key);
 
   // Perform XOR operation between cipher and word to get encryption value
   for (size_t i = 0; i < cipher_length; i++) {
@@ -50,10 +55,13 @@ int controlled_hierarchical_search(void *universal_key, size_t key_length,
   // encryption value is of type {s, Fki(s)}
   pseudorandom_function(encryption_key, key_length, compare_value,
                         random_bytes_length, hash, KEY_LENGTH);
+    secure_free(encryption_key); // Free allocated memory
 
   // Copy hash to the rest of compare value for full comparison
+    sodium_mprotect_readonly(hash);
   safe_memcpy(&compare_value[random_bytes_length],
               cipher_length - random_bytes_length, hash, KEY_LENGTH);
+    secure_free(hash); // Free allocated memory
 
   // Compare encryption value with compare value
   for (size_t i = 0; i < cipher_length; i++) {
@@ -64,10 +72,8 @@ int controlled_hierarchical_search(void *universal_key, size_t key_length,
   }
 
   // Free allocated memory
-  free(encryption_key);
-  free(encryption_value);
-  free(compare_value);
-  free(hash);
+    secure_free(encryption_value);
+    secure_free(compare_value);
 
   return res; // Return the result of the search
 }
@@ -85,23 +91,24 @@ void controlled_hierarchical_encryption(char ***search_keys,
       size_t string_length = strlen(plaintext[i][j]) + 1;
 
       // Allocate memory for search keys
-      search_keys[i][j] = safe_malloc(string_length);
+      search_keys[i][j] = safe_secure_malloc(string_length);
 
       // Generate concatenated chapter string
       char *concatenated_chapter =
           chapter_index_to_string_with_leading_zero(i + 1);
 
       // Allocate memory for universal search keys
-      universal_search_keys[i][j] = safe_malloc(string_length);
+      universal_search_keys[i][j] = safe_secure_malloc(string_length);
 
       // Allocate memory for concatenated word
-      char *concatenated_word = safe_malloc(string_length + 1);
+      char *concatenated_word = safe_secure_malloc(string_length + 1);
       concatenated_word[0] = '1'; // Set the leading character
       safe_strcpy(&concatenated_word[1], string_length + 1, plaintext[i][j]);
 
       // Generate encryption key for the word
       generate_encryption_key(concatenated_word, string_length + 1,
                               universal_search_keys[i][j], string_length);
+      secure_free(concatenated_word); // Free allocated memory
 
       // Generate hierarchical encryption key for the word
       generate_hierarchical_encryption_key(
@@ -110,13 +117,12 @@ void controlled_hierarchical_encryption(char ***search_keys,
 
       // Free allocated memory
       free(concatenated_chapter);
-      free(concatenated_word);
 
       // Store the universal key length
       universal_key_lengths[i][j] = string_length;
 
       // Allocate memory for encryption keys
-      encryption_keys[i][j] = safe_malloc(string_length);
+      encryption_keys[i][j] = safe_secure_malloc(string_length);
 
       // Get encryption value for the word
       get_encryption_value(encryption_keys[i][j], string_length,
@@ -249,9 +255,9 @@ void controlled_hierarchical_scheme() {
 
   // Free allocated memory
   free_dynamic_string_array(plaintext);
-  free_dynamic_string_array(search_keys);
-  free_dynamic_string_array(universal_search_keys);
-  free_dynamic_string_array(encryption_keys);
+  free_dynamic_secure_string_array(search_keys);
+    free_dynamic_secure_string_array(universal_search_keys);
+    free_dynamic_secure_string_array(encryption_keys);
   free_dynamic_string_array(ciphertext);
   free_dynamic_string_array(decrypted_plaintext);
 

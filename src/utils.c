@@ -21,6 +21,29 @@ void *safe_malloc(size_t size) {
   return ptr;
 }
 
+void *safe_secure_malloc(size_t size) {
+    void *ptr = sodium_malloc(size);
+    if (!ptr) {
+        perror("Memory allocation failed");
+        exit(EXIT_FAILURE);
+    }
+    return ptr;
+}
+
+void *safe_secure_malloc_array(size_t count, size_t size) {
+    void *ptr = sodium_allocarray(count, size);
+    if (!ptr) {
+        perror("Memory allocation failed");
+        exit(EXIT_FAILURE);
+    }
+    return ptr;
+}
+
+void secure_free(void *ptr) {
+    sodium_free(ptr);
+}
+
+
 // Safely copy a string from source to destination, ensuring the destination
 // buffer is large enough
 void safe_strcpy(char *dest, size_t dest_size, const char *src) {
@@ -209,6 +232,16 @@ void free_dynamic_string_array(char ***dynamic_array) {
     free(dynamic_array[i]);
   }
   free(dynamic_array);
+}
+
+void free_dynamic_secure_string_array(char ***dynamic_array) {
+    for (size_t i = 0; dynamic_array[i] != NULL; i++) {
+        for (size_t j = 0; dynamic_array[i][j] != NULL; j++) {
+            secure_free(dynamic_array[i][j]);
+        }
+        free(dynamic_array[i]);
+    }
+    free(dynamic_array);
 }
 
 // Get the lengths of strings in a dynamically allocated array of strings
