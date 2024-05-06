@@ -1,7 +1,7 @@
 SRC = ./src/ssoed.c ./src/utils.c ./src/base_encryption.c ./src/basic_scheme.c ./src/controlled_scheme.c ./src/controlled_chapter_scheme.c ./src/controlled_hierarchical_scheme.c
 OBJ = $(SRC:.c=.o)
 NAME = ssoed.out
-CFLAGS = -Wall -g3 -I$(INCLUDE_DIR)
+CFLAGS = -Wall -Werror -g3 -I$(INCLUDE_DIR)
 LDFLAGS = -L$(LIB_DIR) -lsodium
 
 INCLUDE_DIR = /usr/local/include
@@ -21,7 +21,7 @@ lint-fix:
 	clang-tidy -p=./ --fix $(SRC)
 
 lint:
-	clang-tidy -p=./ $(SRC)
+	clang-tidy -p=./ --warnings-as-errors=* $(SRC)
 
 format:
 	clang-format -i $(SRC)

@@ -9,14 +9,14 @@ void controlled_encryption(char *search_keys[], const char *plaintext[],
     size_t string_length = strlen(plaintext[i]) + 1;
 
     // Allocate memory for search keys
-    search_keys[i] = safe_malloc(string_length);
+    search_keys[i] = safe_secure_malloc(string_length);
 
     // Generate encryption key for the plaintext word
     generate_encryption_key(plaintext[i], string_length, search_keys[i],
                             string_length);
 
     // Allocate memory for encryption keys
-    encryption_keys[i] = malloc(string_length);
+    encryption_keys[i] = safe_secure_malloc(string_length);
 
     // Get encryption value for the word
     get_encryption_value(encryption_keys[i], string_length, search_keys[i],
@@ -90,8 +90,8 @@ void controlled_scheme() {
 
   // Free allocated memory
   for (int i = 0; i < WORD_COUNT; i++) {
-    free(search_keys[i]);
-    free(encryption_keys[i]);
+    secure_free(search_keys[i]);
+    secure_free(encryption_keys[i]);
     free(ciphertext[i]);
     free(decrypted_plaintext[i]);
   }

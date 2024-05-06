@@ -11,7 +11,7 @@ void controlled_chapter_encryption(char ***search_keys, char ***plaintext,
       size_t string_length = strlen(plaintext[i][j]) + 1;
 
       // Allocate memory for search keys
-      search_keys[i][j] = safe_malloc(string_length);
+      search_keys[i][j] = safe_secure_malloc(string_length);
 
       // Generate concatenated chapter and word string
       char *concatenated_chapter =
@@ -26,7 +26,7 @@ void controlled_chapter_encryption(char ***search_keys, char ***plaintext,
       free(concatenated_chapter);
 
       // Allocate memory for encryption keys
-      encryption_keys[i][j] = safe_malloc(string_length);
+      encryption_keys[i][j] = safe_secure_malloc(string_length);
 
       // Get encryption value for the word
       get_encryption_value(encryption_keys[i][j], string_length,
@@ -134,8 +134,8 @@ void controlled_chapter_scheme() {
 
   // Free allocated memory
   free_dynamic_string_array(plaintext);
-  free_dynamic_string_array(search_keys);
-  free_dynamic_string_array(encryption_keys);
+  free_dynamic_secure_string_array(search_keys);
+  free_dynamic_secure_string_array(encryption_keys);
   free_dynamic_string_array(ciphertext);
   free_dynamic_string_array(decrypted_plaintext);
 
