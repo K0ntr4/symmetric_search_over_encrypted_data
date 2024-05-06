@@ -134,8 +134,8 @@ void controlled_chapter_scheme() {
 
   // Free allocated memory
   free_dynamic_string_array(plaintext);
-    free_dynamic_secure_string_array(search_keys);
-    free_dynamic_secure_string_array(encryption_keys);
+  free_dynamic_secure_string_array(search_keys);
+  free_dynamic_secure_string_array(encryption_keys);
   free_dynamic_string_array(ciphertext);
   free_dynamic_string_array(decrypted_plaintext);
 

@@ -6,31 +6,30 @@ void pseudorandom_generator(void *buffer, const size_t size) {
 }
 
 // Use a pseudorandom function to generate a hash based on the key and plaintext
-void pseudorandom_function(void *key, size_t key_size,
-                           const char *plaintext, size_t plaintext_size,
-                           char *hash, size_t hash_size) {
+void pseudorandom_function(void *key, size_t key_size, const char *plaintext,
+                           size_t plaintext_size, char *hash,
+                           size_t hash_size) {
   // Use cryptographic hash function to generate the hash
-    sodium_mprotect_readonly(key);
+  sodium_mprotect_readonly(key);
   crypto_generichash((unsigned char *)hash, hash_size,
                      (unsigned char *)plaintext, plaintext_size, key, key_size);
-    sodium_mprotect_noaccess(key);
-    sodium_mprotect_noaccess(hash);
+  sodium_mprotect_noaccess(key);
+  sodium_mprotect_noaccess(hash);
 }
 
 // Encrypt a word using a simple bitwise XOR operation between plaintext and key
-void encrypt_word(char *key, const char *plain, char *cipher,
-                  size_t length) {
-    sodium_mprotect_readonly(key);
+void encrypt_word(char *key, const char *plain, char *cipher, size_t length) {
+  sodium_mprotect_readonly(key);
   // Perform bitwise XOR operation between plaintext and key
   for (size_t i = 0; i < length; i++) {
     cipher[i] = plain[i] ^ key[i];
   }
-    sodium_mprotect_noaccess(key);
+  sodium_mprotect_noaccess(key);
 }
 
 // Generate an encryption value using key and plaintext
-void get_encryption_value(char *encryption_value, size_t text_length,
-                          char *key, size_t key_length) {
+void get_encryption_value(char *encryption_value, size_t text_length, char *key,
+                          size_t key_length) {
   // Calculate the length of random bytes
   size_t random_bytes_length = text_length - KEY_LENGTH;
 
@@ -47,15 +46,15 @@ void get_encryption_value(char *encryption_value, size_t text_length,
   // Use pseudorandom function with key to generate hash
   pseudorandom_function(key, key_length, randombytes, random_bytes_length, hash,
                         KEY_LENGTH);
-    secure_free(randombytes); // Free allocated memory
+  secure_free(randombytes); // Free allocated memory
 
   // Copy hash to encryption value
-    sodium_mprotect_readonly(hash);
+  sodium_mprotect_readonly(hash);
   safe_memcpy(&encryption_value[random_bytes_length],
               text_length - random_bytes_length, hash, KEY_LENGTH);
 
-    secure_free(hash); // Free allocated memory
-    sodium_mprotect_noaccess(encryption_value);
+  secure_free(hash); // Free allocated memory
+  sodium_mprotect_noaccess(encryption_value);
 }
 
 // Generate an encryption key based on plaintext using a pseudorandom function

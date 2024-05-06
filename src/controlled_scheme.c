@@ -91,7 +91,7 @@ void controlled_scheme() {
   // Free allocated memory
   for (int i = 0; i < WORD_COUNT; i++) {
     secure_free(search_keys[i]);
-      secure_free(encryption_keys[i]);
+    secure_free(encryption_keys[i]);
     free(ciphertext[i]);
     free(decrypted_plaintext[i]);
   }

@@ -1,17 +1,16 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <sodium.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sodium.h>
 
 void safe_memcpy(void *dest, size_t dest_size, const void *src,
                  size_t src_size);
 void *safe_malloc(size_t size);
 void *safe_secure_malloc(size_t size);
-void *safe_secure_malloc_array(size_t count, size_t size);
 void secure_free(void *ptr);
 void safe_strcpy(char *dest, size_t dest_size, const char *src);
 void print_byte_array(const unsigned char *arr, int size);

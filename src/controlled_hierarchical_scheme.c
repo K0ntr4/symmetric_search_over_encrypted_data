@@ -6,12 +6,13 @@ void generate_hierarchical_encryption_key(void *generation_key,
                                           const char *plaintext,
                                           const size_t plaintext_length,
                                           char *key, const size_t key_length) {
-  // Could be replaced with another pseudorandom function - decided to skip for now
-    sodium_mprotect_readonly(generation_key);
+  // Could be replaced with another pseudorandom function - decided to skip for
+  // now
+  sodium_mprotect_readonly(generation_key);
   pseudorandom_function(generation_key, generation_key_length, plaintext,
                         plaintext_length, key, key_length);
-    sodium_mprotect_noaccess(generation_key);
-    sodium_mprotect_noaccess(key);
+  sodium_mprotect_noaccess(generation_key);
+  sodium_mprotect_noaccess(key);
 }
 
 // Perform a controlled hierarchical search
@@ -35,12 +36,12 @@ int controlled_hierarchical_search(void *universal_key, size_t key_length,
   char *hash = safe_secure_malloc(KEY_LENGTH);
   int res = 1; // Initialize result to success
 
-    sodium_mprotect_readonly(universal_key);
+  sodium_mprotect_readonly(universal_key);
   // Generate encryption key based on the provided universal key and chapter
   generate_hierarchical_encryption_key(
       universal_key, key_length, concatenated_chapter,
       strlen(concatenated_chapter), encryption_key, key_length);
-    sodium_mprotect_noaccess(universal_key);
+  sodium_mprotect_noaccess(universal_key);
 
   // Perform XOR operation between cipher and word to get encryption value
   for (size_t i = 0; i < cipher_length; i++) {
@@ -55,13 +56,13 @@ int controlled_hierarchical_search(void *universal_key, size_t key_length,
   // encryption value is of type {s, Fki(s)}
   pseudorandom_function(encryption_key, key_length, compare_value,
                         random_bytes_length, hash, KEY_LENGTH);
-    secure_free(encryption_key); // Free allocated memory
+  secure_free(encryption_key); // Free allocated memory
 
   // Copy hash to the rest of compare value for full comparison
-    sodium_mprotect_readonly(hash);
+  sodium_mprotect_readonly(hash);
   safe_memcpy(&compare_value[random_bytes_length],
               cipher_length - random_bytes_length, hash, KEY_LENGTH);
-    secure_free(hash); // Free allocated memory
+  secure_free(hash); // Free allocated memory
 
   // Compare encryption value with compare value
   for (size_t i = 0; i < cipher_length; i++) {
@@ -72,8 +73,8 @@ int controlled_hierarchical_search(void *universal_key, size_t key_length,
   }
 
   // Free allocated memory
-    secure_free(encryption_value);
-    secure_free(compare_value);
+  secure_free(encryption_value);
+  secure_free(compare_value);
 
   return res; // Return the result of the search
 }
@@ -256,8 +257,8 @@ void controlled_hierarchical_scheme() {
   // Free allocated memory
   free_dynamic_string_array(plaintext);
   free_dynamic_secure_string_array(search_keys);
-    free_dynamic_secure_string_array(universal_search_keys);
-    free_dynamic_secure_string_array(encryption_keys);
+  free_dynamic_secure_string_array(universal_search_keys);
+  free_dynamic_secure_string_array(encryption_keys);
   free_dynamic_string_array(ciphertext);
   free_dynamic_string_array(decrypted_plaintext);
 
